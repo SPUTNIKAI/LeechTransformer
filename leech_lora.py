@@ -23,14 +23,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt
 class LeechLoRA(nn.Module):
     def __init__(self, target_layer, r=24):
         super().__init__()
-        self.target = target_layer # Стандартный слой из модели Ильи
+        self.target = target_layer # Стандартный слой из модели 
         # Замороженный геометрический скелет
         self.leech_q = generate_leech_kernel(r) 
         # Обучаемый коэффициент резонанса (всего пара параметров!)
         self.scaling = nn.Parameter(torch.ones(1)) 
 
     def forward(self, x):
-        # Стандартный путь Ильи (вязкий)
+        # Стандартный путь (вязкий)
         standard_out = self.target(x)
         # Геометрический путь (сверхпроводящий)
         lattice_out = torch.matmul(x, self.leech_q) * self.scaling
