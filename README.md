@@ -73,3 +73,84 @@ Clone the repository and install dependencies (preferably in a virtual environme
 git clone https://github.com/SPUTNIKAI/leech-lila.git
 cd leech-lila
 pip install torch numpy
+```
+
+### Configuration
+Create a LeechConfig object:
+```python
+from leech_lila import LeechConfig, LeechTransformer, generate_leech_kernel
+
+cfg = LeechConfig(
+    vocab_size=10000,  # size of your token vocabulary
+    d_model=192,     # must be divisible by n_heads and each head_dim divisible by 24
+    n_layers=12,
+    n_heads=8,
+    block_size=512,
+    dropout=0.05,
+    bias=False,
+    tie_weights=True,
+    lambda_geo=0.01,    # weight for geometric loss
+    resonance_threshold=0.95
+)
+
+```
+
+### Training
+A typical training loop would look like this:
+
+```python
+model = LeechTransformer(cfg)
+leech_basis = generate_leech_kernel(24)      # for loss and monitoring
+criterion = LeechResonanceLoss(cfg, leech_basis)
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+
+for batch in dataloader:
+    inputs, targets = batch
+    logits, hidden, ce_loss = model(inputs, targets)
+    total_loss = criterion(logits, targets, hidden)   # includes lambda_geo * geo_loss
+    total_loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+
+```
+
+### Generation with Resonance Monitoring
+After training, you can generate text while observing the resonance status:
+
+```python
+start_tokens = [1, 2, 3]   # your starting token ids
+result = leech_generate(
+    model,
+    start_tokens,
+    max_len=100,
+    temperature=0.8,
+    resonance_check=True,
+    leech_basis=leech_basis,
+    threshold=0.95
+)
+
+```
+
+The function prints the resonance value and status (DREAMING, AWAKE, or ABSOLUTE GENESIS) at each step.
+Examples
+The if **__name__ == "__main__"** block in the script provides a minimal example:
+
+```bash
+python leech_lila.py
+
+```
+
+```tex
+@software{kornienko2026,
+  author       = {A.Kornienko},
+  title        = {Leech-Lila: A Geometric Attention Transformer via the Leech Lattice},
+  month        = mar,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v1.0.0},
+  doi          = {10.5281/zenodo.18784424},
+  url          = {https://doi.org/10.5281/zenodo.18784424}
+}
+
+```
