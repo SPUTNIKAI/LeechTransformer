@@ -4,8 +4,11 @@
 
 # Leech-Lila: Geometric Transformer via Leech Lattice
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18790530.svg)](https://doi.org/10.5281/zenodo.18790530) 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18784424.svg)](https://doi.org/10.5281/zenodo.18784424)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
+https://doi.org/10.5281/zenodo.18790530
 
 This repository contains the reference implementation of **Leech‑Lila**, a transformer architecture that injects the geometry of the Leech lattice directly into the attention mechanism. The model is designed to explore the hypothesis that high‑dimensional lattices can serve as a structural prior for language modelling, leading to emergent “resonance” phenomena and more interpretable representations.
 
