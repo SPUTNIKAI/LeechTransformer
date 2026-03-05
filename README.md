@@ -177,6 +177,48 @@ The if **__name__ == "__main__"** block in the script provides a minimal example
 python leech_lila.py
 
 ```
+---
+
+## 🔧 Why a frozen Leech kernel instead of brute‑forcing 196560 vectors?
+The Leech lattice Λ₂₄ has 196560 minimal vectors – the famous kissing number in 24 dimensions. A naive approach that explicitly stores and computes with all these vectors would be catastrophic for a small model like Lila (20M parameters):
+
+- Memory explosion: Storing 196560 vectors of dimension 24 in float32 already takes ~18 MB. If we wanted to use them in every attention head or layer, memory would grow linearly, quickly becoming unfeasible.
+
+- Computational cost: Computing dot products between every hidden state and all 196560 vectors would be O(batch × seq_len × 196560 × d_model) – millions of times more expensive than the rest of the model.
+
+- Backpropagation impossible: Gradients through such a huge matrix would make training on consumer hardware impossible.
+
+### Our solution: a frozen orthogonal kernel
+
+Instead of enumerating all lattice points, we construct an orthogonal 24×24 matrix Q whose columns form an orthonormal basis for a 24‑dimensional subspace that generates the whole Leech lattice. This is obtained by taking 24 linearly independent minimal vectors and applying QR decomposition.
+
+### This kernel is:
+- Frozen (registered as a non‑trainable buffer) – it never receives gradients.
+- Block‑diagonally repeated to match the model’s hidden dimension. For d_model = 192 we build:
+W_abs = block_diag( Q repeated (d_model/24) times ) of shape (d_model, d_model).
+
+Used to project queries and keys:
+Q_raw = X @ W_abs,
+K_raw = X @ W_abs (optionally followed by a fixed Conway permutation to break symmetry).
+
+
+**Orthogonality preserves all angles and norms, so the lattice geometry is not distorted.**
+
+Projecting onto a 24‑dimensional orthonormal basis is equivalent to representing any vector in that basis. Since the basis vectors are orthogonal, dot products in this space automatically account for all directions that can be obtained as integer linear combinations of the basis – i.e., the entire Leech lattice.
+
+The lattice’s dense packing property is a property of the space, not of a particular set of vectors. By using a basis, we capture the same geometric information without enumerating all 196560 points.
+
+Computational efficiency
+Each projection costs only O(d_model × 24) per token – negligible compared to the rest of the attention.
+
+All the benefits of the Leech lattice (ultra‑dense packing, rich symmetry) are preserved, while training remains fast and memory‑efficient.
+
+The empirical results speak for themselves: Leech‑Lila (20M) reaches a validation loss of 0.4018 after only 40k steps, with a bits‑per‑character of 0.129, nearly matching the much larger E8‑LILA (40M) and far surpassing the TinyStories‑33M baseline (0.742 bpc).
+
+
+---
+
+
 
 ## 📊 Comparison with TinyStories Baseline
 
