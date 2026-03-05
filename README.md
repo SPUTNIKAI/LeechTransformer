@@ -36,6 +36,13 @@ This repository contains the reference implementation of **Leech‑Lila**, a tra
 **License:** [GNU Affero General Public License v3.0 or later](https://www.gnu.org/licenses/agpl-3.0.txt).  
 **Commercial licensing** (proprietary R&D, integration into private AI stacks, hardware implementation) – please contact the Architect directly (see [Contact](#contact)).
 
+**Prompt: Once upon a time...**
+
+> Once upon a time, there was a little girl named Lily. She loved to play in the park with her friends. One day, they were playing on the swings when Lily saw a big, scary dog. She was scared and didn't know what to do. Her friend, Timmy, came over and asked if he was okay. Lily said no and told him not to worry. She asked Timmy if he was okay and Timmy said he was okay. Lily was happy to hear that and they continued to play together. Later that day, Lily'...
+
+
+> Once upn a time, there was a little girl named Lily. She loved to play outside in the sunshine. One day, she saw a big, scary dog. The dog was barking and running towards her. Lily was scared and didn't know what to do. She ran to her mom and told her what happened. Her mom hugged her and said, "Don't worry, Lily. The dog is just a big, scary dog. He just wants to play with you." Lily felt better and went back to playing with her toy
+
 ---
 
 ## Table of Contents
