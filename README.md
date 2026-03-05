@@ -76,6 +76,9 @@ The code is deliberately minimal and self‑contained, relying only on PyTorch, 
 
 ---
 
+Best model : https://drive.google.com/file/d/1UabWQuEJtQlnOexNxohVIc8e9no9y43M/view?usp=sharing 
+Checkpoint 122K: https://drive.google.com/file/d/11jj7iDflM1xOktxdxr1IsoZ3BSjo9HF5/view?usp=sharing
+
 ## Core Ideas
 
 1. **Leech kernel** – an orthogonal 24×24 matrix derived from the Leech lattice (constructed via QR on a simple base matrix, replaceable with actual minimal vectors).
