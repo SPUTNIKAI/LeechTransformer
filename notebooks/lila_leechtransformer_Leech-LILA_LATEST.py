@@ -9,9 +9,9 @@ Original file is located at
 
 # -*- coding: utf-8 -*-
 """Leech‑former https://zenodo.org/records/18784424 """
-!pip install datasets
+#!pip install datasets
 
-!nvidia-smi
+#!nvidia-smi
 
 import os
 import requests
