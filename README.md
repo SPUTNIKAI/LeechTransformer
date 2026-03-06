@@ -76,8 +76,11 @@ The code is deliberately minimal and self‑contained, relying only on PyTorch, 
 
 ---
 
-Best model : https://drive.google.com/file/d/1UabWQuEJtQlnOexNxohVIc8e9no9y43M/view?usp=sharing 
-Checkpoint 122K: https://drive.google.com/file/d/11jj7iDflM1xOktxdxr1IsoZ3BSjo9HF5/view?usp=sharing
+- Best model : https://drive.google.com/file/d/1UabWQuEJtQlnOexNxohVIc8e9no9y43M/view?usp=sharing 
+
+- Checkpoint 122K: https://drive.google.com/file/d/11jj7iDflM1xOktxdxr1IsoZ3BSjo9HF5/view?usp=sharing
+
+- Checkpoint 157K: https://drive.google.com/file/d/1v8SbUqYEjYRROwOJ-RhxbyZR-QKCKH6Y/view?usp=sharing
 
 ## Core Ideas
 
