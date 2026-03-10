@@ -84,6 +84,13 @@ The code is deliberately minimal and self‑contained, relying only on PyTorch, 
 
 - Checkpoint 200K: https://drive.google.com/file/d/1HsPIyfa-rcHtrNAS8AfrjsEujenZNlU8/view?usp=sharing
 
+- Checkpoint 300K: https://drive.google.com/file/d/1VKmxo8St7gbZEcgGezgdRjt4QPMPsb99/view?usp=drive_link
+
+New dataset  "HuggingFaceFW/fineweb-edu" 
+
+- Checkpoint 330K: Best model https://drive.google.com/file/d/1lnnhoRKDfxmFQafwdkoYCDv8bPqiPW3t/view?usp=sharing
+
+- Checkpoint 340K: https://drive.google.com/file/d/1lnnhoRKDfxmFQafwdkoYCDv8bPqiPW3t/view?usp=sharing
 
 ## Core Ideas
 
