@@ -86,11 +86,22 @@ The code is deliberately minimal and self‑contained, relying only on PyTorch, 
 
 - Checkpoint 300K: https://drive.google.com/file/d/1VKmxo8St7gbZEcgGezgdRjt4QPMPsb99/view?usp=drive_link
 
+Test 300K
+
+> prompt: Who are you? are you a magic book Lila?" 
+> responce: I am a princess! I can make anything with it. Do you like to look at the pictures of animals and flowers in my castle?" Sara said, holding up her favorite story. Ben nodded and smiled back. "That sounds fun! I love your princess book too! Can we go to the park together?" he asked. They ran towards the pond where they saw some ducks swimming in it.
+
+> prompt: "Once upon a time Lila"
+> responce: Once upon a time Lila was walking in the park. She saw something shiny and special on it, she wanted to take it home with her. It looked so pretty! But when she tried to grab it, it started to move away from her hands. The next day Lila noticed that there was a big tree in the park. She thought this would be funny if she could climb up and get down on it. So she ran over and hopped as high as she could, but just before she knew it, something magical happened - Lila started to fall! The tree was so big that the brilliant thing had caught her eye. She looked around in surprise for a long time and then finally reached the top of its branches, but she couldn't get down. Lila started crying because she was so high up on the tree. But then something magical happened - there were lots of colorful birds flying around her! She smiled and jumped back, happy that she had found a way to get down from it.
+
 New dataset  "HuggingFaceFW/fineweb-edu" 
 
 - Checkpoint 330K: Best model https://drive.google.com/file/d/1lnnhoRKDfxmFQafwdkoYCDv8bPqiPW3t/view?usp=sharing
 
 - Checkpoint 340K: https://drive.google.com/file/d/1lnnhoRKDfxmFQafwdkoYCDv8bPqiPW3t/view?usp=sharing
+test: fineweb-edu
+> prompt: are you a book? 
+> responce: Despite your reading, it is easy to identify. You can also find out what the story of our life in which we will learn about and how they work together. The pages are used for teaching people organizations that help you understand whether your book is a linked example, and its easy to find out what you search
 
 ## Core Ideas
 
