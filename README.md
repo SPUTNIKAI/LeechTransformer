@@ -242,7 +242,7 @@ The roadmap below outlines the key engineering and research directions that will
 - **Edge ready**: 20M model after 4‑bit quantization **<10 MB**, runs on Mac M3 Pro at **>100 tokens/sec**.  
 - **Scaling**: A 1‑2B model with the same compression would match GPT‑3‑like capabilities on a single GPU.  
 - **Interpretability**: Stable rank, SVD spectra, and PCA projections reveal the internal geometry – no black box.  
-- **Cross‑domain**: Works for text, physics (CERN shower simulation), and potentially vision/audio via the same geometric core.
+- **Cross‑domain**: Works for text, and potentially vision/audio via the same geometric core.
 
 ---
 
