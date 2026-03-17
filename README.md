@@ -147,7 +147,15 @@ Clone the repository and install dependencies (preferably in a virtual environme
 ```bash
 git clone https://github.com/SPUTNIKAI/leech-lila.git
 cd leech-lila
-pip install torch numpy
+pip install -r requirements.txt
+```
+
+### PyTorch (CPU/CUDA/MPS)
+
+Если установка `torch` из `requirements.txt` не подходит под твоё железо (CUDA/MPS/CPU), поставь PyTorch вручную по официальной инструкции, затем установи остальное:
+
+```bash
+pip install -r requirements-core.txt
 ```
 
 ### Configuration
@@ -188,6 +196,26 @@ for batch in dataloader:
     optimizer.step()
     optimizer.zero_grad()
 
+```
+
+### CLI usage (this repo)
+
+Тренировка:
+
+```bash
+python3 scripts/train_model.py --checkpoint_dir checkpoints --resume --total_steps 100000 --learning_rate 1e-5
+```
+
+Инференс из чекпоинта:
+
+```bash
+python3 scripts/run_inference.py --checkpoint checkpoints/best_model.pt --prompt "who is Lily?" --max_tokens 200
+```
+
+Инференс с резонатором (смещение логитов):
+
+```bash
+python3 scripts/run_inference.py --checkpoint checkpoints/best_model.pt --use_resonator --resonator_alpha 0.1
 ```
 
 ### Generation with Resonance Monitoring
