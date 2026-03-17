@@ -1,3 +1,26 @@
+"""
+🎯 Leech-Lila DOI: 10.5281/zenodo.18784424
+This project is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+Commercial Licensing: For proprietary R&D, integration into private AI stacks, or hardware implementation,
+please contact the Architect directly.
+Copyright (C) 2026 Anatolii Kornienko This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License
+as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt/>.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -59,12 +82,22 @@ class LeechAttention(nn.Module):
             torch.tril(torch.ones(1, 1, cfg.block_size, cfg.block_size)),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        past_kv: tuple[torch.Tensor, torch.Tensor] | None = None,
+        use_cache: bool = False,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor] | None]:
+        """
+        Если use_cache=True, возвращает (out, present_kv).
+        past_kv/present_kv: (k, v) в форме [B, H, T, head_dim].
+        """
         B, T, _ = x.shape
         qkv = self.qkv(x).reshape(B, T, 3, self.n_heads, self.head_dim)
         qkv = qkv.permute(2, 0, 3, 1, 4)
-        q, k, v = qkv.unbind(0)
+        q, k, v = qkv.unbind(0)  # [B,H,T,hd]
 
+        # Leech kernel applied to q/k (blockwise 24)
         q = q.view(B, self.n_heads, T, self.num_blocks, 24)
         k = k.view(B, self.n_heads, T, self.num_blocks, 24)
         kernel = self.W_leech[0:24, 0:24]
@@ -73,12 +106,26 @@ class LeechAttention(nn.Module):
         q = q.reshape(B, self.n_heads, T, self.head_dim)
         k = k.reshape(B, self.n_heads, T, self.head_dim)
 
-        scores = (q @ k.transpose(-2, -1)) * self.scale
-        scores = scores.masked_fill(self.causal_mask[:, :, :T, :T] == 0, float("-inf"))
+        if use_cache:
+            if past_kv is not None:
+                past_k, past_v = past_kv
+                k = torch.cat([past_k, k], dim=2)
+                v = torch.cat([past_v, v], dim=2)
+            present = (k, v)
+            T_k = k.size(2)
+            # если T == 1 и кэш используется, "будущих" ключей нет -> маска не нужна
+            scores = (q @ k.transpose(-2, -1)) * self.scale  # [B,H,T,T_k]
+            if T > 1:
+                scores = scores.masked_fill(self.causal_mask[:, :, :T, :T_k] == 0, float("-inf"))
+        else:
+            present = None
+            scores = (q @ k.transpose(-2, -1)) * self.scale
+            scores = scores.masked_fill(self.causal_mask[:, :, :T, :T] == 0, float("-inf"))
+
         attn = F.softmax(scores, dim=-1)
         attn = self.dropout(attn)
         out = (attn @ v).transpose(1, 2).reshape(B, T, -1)
-        return self.out(out)
+        return self.out(out), present
 
 
 class LeechBlock(nn.Module):
@@ -94,10 +141,16 @@ class LeechBlock(nn.Module):
             nn.Dropout(cfg.dropout),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.attn(self.ln1(x))
+    def forward(
+        self,
+        x: torch.Tensor,
+        past_kv: tuple[torch.Tensor, torch.Tensor] | None = None,
+        use_cache: bool = False,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor] | None]:
+        attn_out, present = self.attn(self.ln1(x), past_kv=past_kv, use_cache=use_cache)
+        x = x + attn_out
         x = x + self.ffn(self.ln2(x))
-        return x
+        return x, present
 
 
 class LeechResonanceBiasing(nn.Module):
@@ -211,12 +264,39 @@ class LeechGPT(nn.Module):
         idx: torch.Tensor,
         targets: torch.Tensor | None = None,
         use_resonator: bool = False,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+        past_key_values: list[tuple[torch.Tensor, torch.Tensor]] | None = None,
+        use_cache: bool = False,
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor | None,
+        list[tuple[torch.Tensor, torch.Tensor]] | None,
+    ]:
         b, t = idx.size()
         assert t <= self.cfg.block_size
-        x = self.tok_emb(idx) + self.pos_emb[:, :t, :]
-        for block in self.blocks:
-            x = block(x)
+
+        if use_cache:
+            past_len = 0
+            if past_key_values is not None and len(past_key_values) > 0:
+                past_len = past_key_values[0][0].size(2)
+            if past_len + t > self.cfg.block_size:
+                raise ValueError(
+                    f"KV-cache поддерживается только пока (past_len+t) <= block_size ({self.cfg.block_size}). "
+                    f"Сейчас past_len={past_len}, t={t}."
+                )
+            x = self.tok_emb(idx) + self.pos_emb[:, past_len : past_len + t, :]
+        else:
+            x = self.tok_emb(idx) + self.pos_emb[:, :t, :]
+
+        new_past: list[tuple[torch.Tensor, torch.Tensor]] | None = [] if use_cache else None
+        for i, block in enumerate(self.blocks):
+            pkv = None
+            if use_cache and past_key_values is not None:
+                pkv = past_key_values[i]
+            x, present = block(x, past_kv=pkv, use_cache=use_cache)
+            if use_cache:
+                assert present is not None
+                new_past.append(present)
         x = self.final_norm(x)
         logits = self.head(x)
         hidden = x
@@ -231,5 +311,5 @@ class LeechGPT(nn.Module):
                 loss_geo = self.resonance_loss_fn(hidden)
                 loss = loss + self.cfg.lambda_geo * loss_geo
 
-        return logits, hidden, loss
+        return logits, hidden, loss, new_past
 

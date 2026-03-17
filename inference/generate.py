@@ -1,3 +1,26 @@
+"""
+🎯 Leech-Lila DOI: 10.5281/zenodo.18784424
+This project is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+Commercial Licensing: For proprietary R&D, integration into private AI stacks, or hardware implementation,
+please contact the Architect directly.
+Copyright (C) 2026 Anatolii Kornienko This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License
+as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt/>.
+"""
+
 """Генерация текста для LeechGPT (опционально с резонатором)."""
 
 import re
@@ -18,6 +41,7 @@ def generate(
     repetition_window=50,
     device=None,
     use_resonator=False,
+    use_kv_cache=False,
     return_stats=False,
     print_tokens=True,
 ):
@@ -49,12 +73,39 @@ def generate(
     if eos_id == -1:
         eos_id = None
 
+    # KV-cache работает только пока общая длина <= block_size
+    use_kv_cache = bool(use_kv_cache) and (context.size(1) <= block_size)
+    past_key_values = None
+
     t0 = time.perf_counter()
     with torch.no_grad():
+        if use_kv_cache:
+            # "префилл" кэша на всём промпте
+            logits, _, _, past_key_values = model(context, use_resonator=use_resonator, use_cache=True, past_key_values=None)
+            _ = logits  # logits от промпта сейчас не используем напрямую
+
         for _ in range(max_tokens):
-            idx_cond = context[:, -block_size:]
-            logits, _, _ = model(idx_cond, use_resonator=use_resonator)
-            logits = logits[0, -1, :].clone()
+            if use_kv_cache:
+                # генерируем по 1 токену (fast path)
+                idx_in = context[:, -1:]
+                try:
+                    logits, _, _, past_key_values = model(
+                        idx_in,
+                        use_resonator=use_resonator,
+                        use_cache=True,
+                        past_key_values=past_key_values,
+                    )
+                except ValueError:
+                    # превысили block_size -> откат на обычный режим
+                    use_kv_cache = False
+                    past_key_values = None
+                    idx_cond = context[:, -block_size:]
+                    logits, _, _, _ = model(idx_cond, use_resonator=use_resonator, use_cache=False, past_key_values=None)
+                logits = logits[0, -1, :].clone()
+            else:
+                idx_cond = context[:, -block_size:]
+                logits, _, _, _ = model(idx_cond, use_resonator=use_resonator, use_cache=False, past_key_values=None)
+                logits = logits[0, -1, :].clone()
 
             # Штрафы за повторения
             past_tokens = context[0, -repetition_window:].tolist()

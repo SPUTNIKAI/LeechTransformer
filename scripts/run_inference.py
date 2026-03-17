@@ -1,3 +1,26 @@
+"""
+🎯 Leech-Lila DOI: 10.5281/zenodo.18784424
+This project is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+Commercial Licensing: For proprietary R&D, integration into private AI stacks, or hardware implementation,
+please contact the Architect directly.
+Copyright (C) 2026 Anatolii Kornienko This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License
+as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt/>.
+"""
+
 import argparse
 import os
 import sys
@@ -27,6 +50,7 @@ def main():
     parser.add_argument("--bench", action="store_true", help="Print tokens/sec for this generation run")
     parser.add_argument("--bench_warmup", type=int, default=1, help="Warmup runs before timing (default: 1)")
     parser.add_argument("--quiet", action="store_true", help="Disable streaming token printing (useful for benchmarking)")
+    parser.add_argument("--kv_cache", action="store_true", help="Use KV-cache for faster decoding (works reliably while total length <= block_size)")
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -58,6 +82,7 @@ def main():
                 repetition_window=args.repetition_window,
                 device=device,
                 use_resonator=args.use_resonator,
+                use_kv_cache=args.kv_cache,
                 print_tokens=not args.quiet,
             )
 
@@ -72,6 +97,7 @@ def main():
         repetition_window=args.repetition_window,
         device=device,
         use_resonator=args.use_resonator,
+        use_kv_cache=args.kv_cache,
         return_stats=args.bench,
         print_tokens=not args.quiet,
     )
