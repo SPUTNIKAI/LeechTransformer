@@ -118,16 +118,20 @@ def generate(
                 if last_token in punct_ids:
                     logits[last_token] -= 50.0
 
-            logits = logits / temperature
-            probs = torch.softmax(logits, dim=-1)
+            greedy_decode = temperature is not None and temperature <= 0
+            if greedy_decode:
+                probs = None
+            else:
+                logits = logits / temperature
+                probs = torch.softmax(logits, dim=-1)
 
             # Top-K
-            if top_k is not None and top_k > 0:
+            if not greedy_decode and top_k is not None and top_k > 0:
                 v, _ = torch.topk(probs, min(top_k, probs.size(-1)))
                 probs[probs < v[-1]] = 0.0
 
             # Top-P
-            if top_p is not None and 0.0 < top_p < 1.0:
+            if not greedy_decode and top_p is not None and 0.0 < top_p < 1.0:
                 sorted_probs, sorted_indices = torch.sort(probs, descending=True)
                 cumsum_probs = torch.cumsum(sorted_probs, dim=-1)
                 mask = cumsum_probs > top_p
@@ -136,14 +140,16 @@ def generate(
                 indices_to_remove = sorted_indices[mask]
                 probs[indices_to_remove] = 0.0
 
-            probs_sum = probs.sum()
-            if probs_sum > 0:
-                probs /= probs_sum
+            if greedy_decode:
+                next_token = torch.argmax(logits, dim=-1, keepdim=True)
             else:
-                probs = torch.zeros_like(probs)
-                probs[space_id if space_id != -1 else sp.unk_id()] = 1.0
-
-            next_token = torch.multinomial(probs, num_samples=1)
+                probs_sum = probs.sum()
+                if probs_sum > 0:
+                    probs /= probs_sum
+                else:
+                    probs = torch.zeros_like(probs)
+                    probs[space_id if space_id != -1 else sp.unk_id()] = 1.0
+                next_token = torch.multinomial(probs, num_samples=1)
             context = torch.cat((context, next_token.unsqueeze(0)), dim=1)
             token_id = next_token.item()
 
